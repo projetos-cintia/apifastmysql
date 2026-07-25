@@ -131,6 +131,7 @@ Agora vamos registrar a instalação no seu repositório.
 
 ```powershell
 cd ..
+garanta que esteja em C:\projetocombanco
 git status
 git remote set-url origin https://github.com/projetos-cintia/teste.git
 git add -A

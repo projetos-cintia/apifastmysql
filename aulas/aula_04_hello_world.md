@@ -24,6 +24,10 @@ Você sempre usa os dois juntos. O uvicorn abre a porta, o FastAPI atende.
 
 Crie um arquivo chamado `main.py` dentro da pasta `backend/`.
 
+Caso não esteja dentro dessa pasta basta digitar
+
+'''(venv) PS C:\projetocombanco> cd backend'''
+
 ```python
 from fastapi import FastAPI  # importa o FastAPI
 
@@ -51,7 +55,7 @@ def inicio():                # quando alguém acessar "/", essa função vai rod
 Com o venv ativado, entre na pasta `backend` e execute:
 
 ```powershell
-cd backend
+cd backend - ***caso ainda não esteja dentro da pasta***
 uvicorn main:app --reload
 ```
 
@@ -102,6 +106,10 @@ Acesse no navegador:
 http://127.0.0.1:8000/docs
 ```
 
+Você vai ver o Swagger com a interface gráfica, vera nela:
+
+A rota GET, abra clicando na seta para baixo no final no card, clique no botão '''Try it out''' e depois no Botão executar, verá o mesmo resultado
+
 O FastAPI gera automaticamente uma página onde você pode:
 - Ver todos os endpoints da API
 - Testar cada endpoint direto pelo navegador
@@ -122,10 +130,11 @@ No terminal, pressione **CTRL + C**.
 ```
 estudio-tatuagem-api/
 ├── aulas/
+├── banco/
 ├── backend/
 │   ├── main.py          ← novo
-│   └── requirements.txt├── 
-│   ├── venv/
+│   ├── requirements.txt ← novo
+│   └── venv/            ← criado na aula 3
 ├── .gitignore
 └── REGRAS.md
 ```

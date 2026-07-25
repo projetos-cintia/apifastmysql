@@ -2,6 +2,8 @@
 
 ## O que vamos fazer nessa aula
 
+> Antes de começar: se você estiver no laboratório e a máquina tiver sido reiniciada, o ambiente virtual não vem do GitHub. Por isso, é preciso criar o venv novamente na pasta `backend` antes de continuar. Esse processo foi explicado na Aula 3, aproximadamente na linha 51.
+
 Vamos construir o CRUD de clientes **um passo por vez**, testando cada etapa antes de avançar:
 
 1. Criar o `.env` e testar a conexão com o banco
@@ -10,7 +12,6 @@ Vamos construir o CRUD de clientes **um passo por vez**, testando cada etapa ant
 4. Adicionar cadastro (INSERT)
 5. Adicionar atualização (UPDATE)
 6. Adicionar exclusão (DELETE)
-
 ---
 
 ## Parte 1 — O arquivo .env
@@ -22,6 +23,8 @@ Se você mandar o código para o GitHub, qualquer pessoa verá a senha.
 
 O arquivo `.env` guarda essas informações separadas do código.
 O `.gitignore` já está configurado para não mandar esse arquivo pro GitHub.
+
+lembrando que como você sempre vai perder esse arquivo quando sair no laboratório da ETEC, o ideal é que você tenha ele num drive pessoal, ou pen drive.
 
 ### Criando o .env
 
@@ -36,6 +39,7 @@ DB_NAME=estudio_tatuagem
 
 > No XAMPP o usuário padrão é `root` e a senha é vazia.
 
+Lembrando que se não importou o banco de dados para o Xampp faça isso agora, ele está na sua pasta banco.
 ---
 
 ## Parte 2 — Conectando ao banco (database.py)
@@ -246,14 +250,25 @@ Adicione no final do arquivo:
 def deletar_cliente(id: int):
     conn = conectar()
     cursor = conn.cursor()
-    cursor.execute("DELETE FROM cliente WHERE idcliente = %s", (id,))
-    conn.commit()
-    conn.close()
-    return {"mensagem": "Cliente deletado com sucesso"}
+
+    try:
+        cursor.execute("DELETE FROM cliente WHERE idcliente = %s", (id,))
+        conn.commit()
+        conn.close()
+        return {"mensagem": "Cliente deletado com sucesso"}
+    except Exception as erro:
+        conn.rollback()
+        conn.close()
+        return {"erro": "Não foi possível excluir este cliente. Verifique se ele possui agendamentos."}
 ```
 
-**Teste:** no `/docs`, use `DELETE /clientes/{id}` para deletar um cliente.
-Depois acesse `/clientes` para confirmar que ele sumiu da lista.
+> Atenção: se o cliente tiver agendamentos na tabela `agendamento`, o delete vai falhar. Isso acontece porque existe uma chave estrangeira ligando as duas tabelas.
+>
+> Em outras palavras: você não consegue apagar um cliente que ainda está relacionado a um agendamento.
+>
+> **Teste:** no `/docs`, use `DELETE /clientes/{id}` para deletar um cliente.
+> Se o cliente tiver agendamento, o sistema vai devolver um erro. Para testar o delete com sucesso, use um cliente sem agendamento.
+> Depois acesse `/clientes` para confirmar se ele sumiu da lista.
 
 ---
 
