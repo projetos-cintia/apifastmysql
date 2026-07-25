@@ -30,17 +30,17 @@ O sistema terá três partes que conversam entre si:
 ```
 projetocombanco/
 │
-├── banco.sql              ← Script SQL para criar o banco de dados
-├── main.py                ← Toda a nossa API (FastAPI)
-├── requirements.txt       ← Lista das bibliotecas Python necessárias
+├── banco/                 ← Arquivos SQL do banco exportado/importado
+│   └── estudio_tatuagem.sql
+├── backend/               ← Código Python da API
+├── frontend/              ← Páginas HTML e JavaScript
 ├── REGRAS.md              ← Este arquivo
 │
-└── static/                ← Pasta com as páginas HTML
-    ├── index.html         ← Página inicial (menu)
-    ├── clientes.html      ← Tela de clientes
-    ├── tatuadores.html    ← Tela de tatuadores
-    └── agendamentos.html  ← Tela de agendamentos
+└── aulas/                 ← Material das aulas
 ```
+
+> Como os computadores da escola podem ser congelados, o banco precisa ser tratado como um arquivo de backup. Sempre que o banco for criado ou alterado, exporte o conteúdo para a pasta `banco/` e, nas próximas aulas, importe esse arquivo no MySQL antes de continuar.
+
 
 ---
 
