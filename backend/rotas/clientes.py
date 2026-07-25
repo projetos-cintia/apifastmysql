@@ -50,7 +50,22 @@ def criar_cliente(cliente: Cliente):   # recebe os dados no corpo da requisiçã
     conn.close()
     return {"mensagem": "Cliente cadastrado com sucesso"}
 
-# DELETE /clientes/{id} — deleta um cliente
+@router.put("/clientes/{id}")
+def atualizar_cliente(id: int, cliente: Cliente):
+    conn = conectar()
+    cursor = conn.cursor()
+    cursor.execute(
+        """UPDATE cliente
+           SET nome=%s, cpf=%s, telefone=%s, datacadastro=%s, cidade=%s, uf=%s
+           WHERE idcliente=%s""",
+        (cliente.nome, cliente.cpf, cliente.telefone,
+         cliente.datacadastro, cliente.cidade, cliente.uf, id)
+    )
+    conn.commit()
+    conn.close()
+    return {"mensagem": "Cliente atualizado com sucesso"}
+
+
 # DELETE /clientes/{id} — deleta um cliente
 @router.delete("/clientes/{id}")
 def deletar_cliente(id: int):

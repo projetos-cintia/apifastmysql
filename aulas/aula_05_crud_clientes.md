@@ -293,6 +293,12 @@ estudio-tatuagem-api/
 
 ---
 
+## Final da aula
+
+Ao terminar esta aula, lembre-se de exportar novamente o banco e salvar o arquivo em [banco/estudio_tatuagem.sql](banco/estudio_tatuagem.sql) com as atualizações feitas, como os novos clientes cadastrados.
+
+Isso é importante porque, em laboratório, o banco pode ser perdido quando a máquina for reiniciada ou a aula terminar.
+
 ## Próxima aula
 
 Na **Aula 6** vamos criar uma página HTML que se conecta a essa API, para ver o CRUD de clientes funcionando numa tela de verdade.

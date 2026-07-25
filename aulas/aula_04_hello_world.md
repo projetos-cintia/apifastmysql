@@ -48,6 +48,18 @@ def inicio():                # quando alguém acessar "/", essa função vai rod
 | `@app.get("/")` | Diz: "quando alguém fizer um GET no endereço `/`, execute a função abaixo" |
 | `return {...}` | O que a API vai devolver — um JSON |
 
+### O papel do arquivo `main.py`
+
+O arquivo `main.py` é o ponto central da nossa API.
+
+Ele é onde vamos:
+- criar a aplicação FastAPI,
+- registrar as rotas,
+- organizar as funcionalidades da API,
+- e conectar tudo que vamos construir nas próximas aulas.
+
+Pensando no projeto, o `main.py` é como o "coração" da aplicação: ele recebe as requisições e direciona para as partes certas do sistema.
+
 ---
 
 ## Parte 3 — Rodando a API
