@@ -1,5 +1,25 @@
 # Aula 6 — Frontend de Clientes
 
+## Antes de começar — relembrando o ambiente
+
+Se a máquina foi reiniciada desde a última aula, repita os passos de sempre antes de continuar:
+
+1. **Importe o banco de novo** no phpMyAdmin, aba **Importar**, usando `banco/estudio_tatuagem.sql` (processo completo na Aula 2, Passo 4).
+2. **Recrie e ative o ambiente virtual**, dentro da pasta `backend`:
+   ```powershell
+   cd backend
+   python -m venv venv
+   .\venv\Scripts\Activate.ps1
+   ```
+   Se der erro de política de execução ou de `pydantic-core`/Rust, o passo a passo de correção está na Aula 3.
+3. **Reinstale as dependências e rode a API:**
+   ```powershell
+   pip install -r requirements.txt
+   uvicorn main:app --reload
+   ```
+
+---
+
 ## O que vamos fazer nessa aula
 
 1. Entender o que é CORS e por que ele existe

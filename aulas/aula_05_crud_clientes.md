@@ -1,8 +1,25 @@
 # Aula 5 — CRUD de Clientes
 
-## O que vamos fazer nessa aula
+## Antes de começar — relembrando o ambiente
 
-> Antes de começar: se você estiver no laboratório e a máquina tiver sido reiniciada, o ambiente virtual não vem do GitHub. Por isso, é preciso criar o venv novamente na pasta `backend` antes de continuar. Esse processo foi explicado na Aula 3, aproximadamente na linha 51.
+Se a máquina foi reiniciada desde a última aula, repita os passos de sempre antes de continuar:
+
+1. **Importe o banco de novo** no phpMyAdmin, aba **Importar**, usando `banco/estudio_tatuagem.sql` (processo completo na Aula 2, Passo 4).
+2. **Recrie e ative o ambiente virtual**, dentro da pasta `backend`:
+   ```powershell
+   cd backend
+   python -m venv venv
+   .\venv\Scripts\Activate.ps1
+   ```
+   Se der erro de política de execução ou de `pydantic-core`/Rust, o passo a passo de correção está na Aula 3.
+3. **Reinstale as dependências:**
+   ```powershell
+   pip install -r requirements.txt
+   ```
+
+---
+
+## O que vamos fazer nessa aula
 
 Vamos construir o CRUD de clientes **um passo por vez**, testando cada etapa antes de avançar:
 
