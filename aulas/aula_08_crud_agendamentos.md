@@ -5,14 +5,22 @@
 Se a máquina foi reiniciada desde a última aula, repita os passos de sempre antes de continuar:
 
 1. **Importe o banco de novo** no phpMyAdmin, aba **Importar**, usando `banco/estudio_tatuagem.sql` (processo completo na Aula 2, Passo 4).
-2. **Recrie e ative o ambiente virtual**, dentro da pasta `backend`:
+2. **Recrie o arquivo `.env`** dentro da pasta `backend` — ele também não vai pro GitHub, então some toda vez que a máquina é reiniciada:
+   ```
+   DB_HOST=localhost
+   DB_USER=root
+   DB_PASSWORD=
+   DB_NAME=estudio_tatuagem
+   ```
+   Detalhes desse arquivo na Aula 5, Parte 1.
+3. **Recrie e ative o ambiente virtual**, dentro da pasta `backend`:
    ```powershell
    cd backend
    python -m venv venv
    .\venv\Scripts\Activate.ps1
    ```
    Se der erro de política de execução ou de `pydantic-core`/Rust, o passo a passo de correção está na Aula 3.
-3. **Reinstale as dependências e rode a API:**
+4. **Reinstale as dependências e rode a API:**
    ```powershell
    pip install -r requirements.txt
    uvicorn main:app --reload
@@ -75,12 +83,26 @@ class Agendamento(BaseModel):
     horaagendamento: str                    # obrigatório
     descricaotatuagem: Optional[str] = None # opcional
     valortatuagem: Optional[float] = None   # opcional
-    status: Optional[str] = None            # só é usado ao atualizar (ver Parte 4)
+    status: Optional[str] = None            # só é usado ao atualizar (ver Parte 7)
 ```
 
 ---
 
-## Parte 3 — Cadastrar um agendamento (POST)
+## Parte 3 — Registrando a rota no main.py
+
+Antes de sair criando as rotas, já deixa o `main.py` sabendo que esse arquivo existe — é o mesmo truque da Aula 5: registra o router vazio primeiro, depois vai preenchendo.
+
+```python
+from rotas import clientes, senioridade, tatuadores, agendamentos   # ← adiciona agendamentos aqui
+...
+app.include_router(agendamentos.router)   # ← registra a nova rota
+```
+
+**Teste:** acesse `/docs`. Ainda não vai aparecer nenhuma rota de `/agendamentos` — o arquivo só tem o modelo até agora, sem nenhum `@router.get/post/put/delete`. Mas a conexão já está pronta: conforme formos adicionando as rotas nas próximas partes, elas vão aparecer sozinhas em `/docs` (o `--reload` cuida disso).
+
+---
+
+## Parte 4 — Cadastrar um agendamento (POST)
 
 ```python
 # POST /agendamentos — cadastra um novo agendamento
@@ -107,7 +129,7 @@ def criar_agendamento(agendamento: Agendamento):
 
 ---
 
-## Parte 4 — Listar agendamentos (GET) — duas JOINs
+## Parte 5 — Listar agendamentos (GET) — duas JOINs
 
 ```python
 # GET /agendamentos — lista todos os agendamentos, já com nome do cliente e do tatuador
@@ -132,7 +154,7 @@ def listar_agendamentos():
 
 ---
 
-## Parte 5 — Buscar, atualizar e deletar
+## Parte 6 — Rota: Buscar um agendamento (GET por ID)
 
 ```python
 # GET /agendamentos/{id} — busca um agendamento pelo ID
@@ -146,7 +168,15 @@ def buscar_agendamento(id: int):
     if not agendamento:
         return {"erro": "Agendamento não encontrado"}
     return agendamento
+```
 
+**Teste:** acesse `GET /agendamentos/{id}` no `/docs` usando o ID de um agendamento que você já cadastrou. Depois teste com um ID que não existe — deve devolver o erro.
+
+---
+
+## Parte 7 — Rota: Atualizar um agendamento (PUT)
+
+```python
 # PUT /agendamentos/{id} — atualiza um agendamento existente
 @router.put("/agendamentos/{id}")
 def atualizar_agendamento(id: int, agendamento: Agendamento):
@@ -164,7 +194,15 @@ def atualizar_agendamento(id: int, agendamento: Agendamento):
     conn.commit()
     conn.close()
     return {"mensagem": "Agendamento atualizado com sucesso"}
+```
 
+**Teste:** no `/docs`, use `PUT /agendamentos/{id}` para mudar o `status` de um agendamento para `"confirmado"`. Depois busque o mesmo ID com `GET /agendamentos/{id}` para confirmar a alteração.
+
+---
+
+## Parte 8 — Rota: Deletar um agendamento (DELETE)
+
+```python
 # DELETE /agendamentos/{id} — deleta um agendamento
 @router.delete("/agendamentos/{id}")
 def deletar_agendamento(id: int):
@@ -178,21 +216,11 @@ def deletar_agendamento(id: int):
 
 > **Por que o DELETE aqui não tem `try/except`, como em cliente e tatuador?** Porque nenhuma outra tabela do banco referencia `agendamento` como chave estrangeira — ele é sempre o "filho", nunca o "pai". Então não existe como esse delete falhar por causa de uma FK. Vale a pena parar aqui e perguntar aos alunos: por que cliente e tatuador precisavam do `try/except` e agendamento não?
 
----
-
-## Parte 6 — Registrando a rota no main.py
-
-```python
-from rotas import clientes, senioridade, tatuadores, agendamentos   # ← adiciona agendamentos aqui
-...
-app.include_router(agendamentos.router)   # ← registra a nova rota
-```
-
-**Teste:** acesse `/docs` e confirme que o grupo `/agendamentos` aparece com as 5 rotas (listar, buscar, criar, atualizar, deletar).
+**Teste:** no `/docs`, use `DELETE /agendamentos/{id}` para excluir um agendamento. Depois acesse `GET /agendamentos` para confirmar que ele sumiu da lista. Nesse ponto o grupo `/agendamentos` já deve ter as 5 rotas completas (listar, buscar, criar, atualizar, deletar).
 
 ---
 
-## Parte 7 — Frontend: HTML
+## Parte 9 — Frontend: HTML
 
 Crie `frontend/agendamentos.html`:
 
@@ -287,7 +315,7 @@ Crie `frontend/agendamentos.html`:
 
 ---
 
-## Parte 8 — Frontend: JavaScript
+## Parte 10 — Frontend: JavaScript
 
 Crie `frontend/js/agendamentos.js`:
 
@@ -437,7 +465,7 @@ async function deletarAgendamento(id) {
 
 ---
 
-## Parte 9 — Atualizando a navegação
+## Parte 11 — Atualizando a navegação
 
 Adicione o link "Agendamentos" na navbar de `clientes.html`, `senioridade.html` e `tatuadores.html`, deixando as quatro páginas com a mesma barra:
 
@@ -462,7 +490,7 @@ Adicione o link "Agendamentos" na navbar de `clientes.html`, `senioridade.html` 
 - **Erro 422 ao cadastrar:** confira se `idcliente`, `idtatuador` e `valortatuagem` foram convertidos com `Number(...)` antes de montar o JSON — mesma causa do erro que já vimos na Aula 7 com `idsenioridade`.
 - **`<select>` de cliente ou tatuador aparece vazio:** confira se `carregarClientes()` e `carregarTatuadores()` estão sendo chamadas, e se já existe pelo menos um cliente e um tatuador cadastrados.
 - **O campo de hora não preenche certo ao editar:** o `mysql-connector-python` às vezes devolve a coluna `horaagendamento` num formato sem zero à esquerda (por exemplo `9:00:00` em vez de `09:00:00`), e o `<input type="time">` só aceita o formato certo. Se isso acontecer nos seus testes, me avisa que ajustamos juntas — ainda não é algo que apareceu nas aulas anteriores.
-- **Esqueceu de atualizar a navbar:** se clicar em "Agendamentos" numa página antiga e não tiver o link, é só repetir o bloco da Parte 9 nas páginas que faltaram.
+- **Esqueceu de atualizar a navbar:** se clicar em "Agendamentos" numa página antiga e não tiver o link, é só repetir o bloco da Parte 11 nas páginas que faltaram.
 
 ---
 
