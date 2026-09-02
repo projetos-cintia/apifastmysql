@@ -148,11 +148,11 @@ Vamos construir na seguinte ordem (não pular etapas!):
 
 - [ ] Aula 1 — O que é uma API? (teoria)
 - [ ] Aula 2 — Criar o banco de dados no XAMPP
-- [ ] Aula 3 — Instalar Python e FastAPI
-- [ ] Aula 4 — Primeiro "Hello World" com FastAPI
-- [ ] Aula 5 — Conectar o Python ao MySQL
-- [ ] Aula 6 — CRUD completo de Clientes
-- [ ] Aula 7 — CRUD de Senioridade e Tatuadores
-- [ ] Aula 8 — CRUD de Agendamentos
-- [ ] Aula 9 — Frontend HTML simples
-- [ ] Aula 10 — Ligar o Frontend à API
+- [ ] Aula 3 — Preparando o ambiente (Python, venv, FastAPI)
+- [ ] Aula 4 — Primeiro endpoint ("Hello World" com FastAPI)
+- [ ] Aula 5 — CRUD de Clientes (conectando o Python ao MySQL)
+- [ ] Aula 6 — Frontend de Clientes (CORS, HTML/JS, ligação com a API)
+- [ ] Aula 7 — CRUD de Senioridade e Tatuadores (chave estrangeira, JOIN)
+- [ ] Aula 8 — CRUD de Agendamentos (duas chaves estrangeiras, data e hora)
+- [ ] Aula 9 — Upload de Imagem (desenho aprovado)
+- [ ] Aula 10 — Login e Dashboard (unindo as telas construídas até aqui) — *a definir*

@@ -125,7 +125,26 @@ def criar_agendamento(agendamento: Agendamento):
 
 > **Por que não mandamos o status no cadastro?** Porque a coluna `status` já nasceu, lá na Aula 2, com `DEFAULT 'pendente'`. Se o `INSERT` não menciona essa coluna, o próprio MySQL preenche "pendente" sozinho. É um bom exemplo de regra de negócio que já mora no banco, sem precisar de nenhuma linha extra de Python.
 
-**Teste:** no `/docs`, cadastre um agendamento pelo `POST /agendamentos`. Ainda não temos como ver o resultado formatado — isso vem na próxima parte.
+### Exemplo de JSON para testar
+
+`idcliente` e `idtatuador` são chaves estrangeiras — só funcionam se já existirem de verdade nas tabelas `cliente` e `tatuador`. Antes de testar, dá uma olhada em `GET /clientes` e `GET /tatuadores` pra saber quais IDs existem no seu banco agora.
+
+Um exemplo válido, usando os dados de teste que vieram da Aula 2 (cliente 1 = Ana Silva, tatuador 1 = Lucas Mendes):
+
+```json
+{
+  "idcliente": 1,
+  "idtatuador": 1,
+  "dataagendamento": "2026-10-20",
+  "horaagendamento": "15:30",
+  "descricaotatuagem": "Fênix nas costas",
+  "valortatuagem": 450.00
+}
+```
+
+> Se você usar um `idcliente` ou `idtatuador` que não existe no banco, o cadastro vai dar erro. É a chave estrangeira te protegendo de criar um agendamento "órfão" — sem cliente ou tatuador de verdade por trás.
+
+**Teste:** no `/docs`, cadastre um agendamento pelo `POST /agendamentos` usando o JSON de exemplo acima (ajustando os IDs para os que existirem no seu banco). Ainda não temos como ver o resultado formatado — isso vem na próxima parte.
 
 ---
 
@@ -143,11 +162,19 @@ def listar_agendamentos():
         JOIN cliente  ON agendamento.idcliente  = cliente.idcliente
         JOIN tatuador ON agendamento.idtatuador = tatuador.idtatuador
     """)
-    # duas JOINs: uma traz o nome do cliente, a outra traz o nome do tatuador
-    # é o mesmo padrão da Aula 7, só que repetido duas vezes
     agendamentos = cursor.fetchall()
     conn.close()
+
+    # o mysql-connector-python devolve colunas TIME como um "timedelta" (tempo decorrido),
+    # não como texto — por isso convertemos aqui pra "HH:MM:SS" antes de mandar pro frontend
+    for a in agendamentos:
+        total_segundos = int(a["horaagendamento"].total_seconds())
+        horas, resto = divmod(total_segundos, 3600)
+        minutos, segundos = divmod(resto, 60)
+        a["horaagendamento"] = f"{horas:02d}:{minutos:02d}:{segundos:02d}"
+
     return agendamentos
+
 ```
 
 **Teste:** acesse `GET /agendamentos` no `/docs`. Cada agendamento deve vir com `cliente` e `tatuador` como nomes (não como números) e `status` já como `"pendente"`, mesmo sem ter sido enviado no cadastro.
@@ -167,6 +194,13 @@ def buscar_agendamento(id: int):
     conn.close()
     if not agendamento:
         return {"erro": "Agendamento não encontrado"}
+
+    # mesma conversão da Parte 5 — sem isso, horaagendamento viria como número de segundos
+    total_segundos = int(agendamento["horaagendamento"].total_seconds())
+    horas, resto = divmod(total_segundos, 3600)
+    minutos, segundos = divmod(resto, 60)
+    agendamento["horaagendamento"] = f"{horas:02d}:{minutos:02d}:{segundos:02d}"
+
     return agendamento
 ```
 
@@ -197,6 +231,26 @@ def atualizar_agendamento(id: int, agendamento: Agendamento):
 ```
 
 **Teste:** no `/docs`, use `PUT /agendamentos/{id}` para mudar o `status` de um agendamento para `"confirmado"`. Depois busque o mesmo ID com `GET /agendamentos/{id}` para confirmar a alteração.
+
+### Exemplo de JSON para testar
+
+O PUT também exige o objeto completo (não só o `status` — todos os campos, porque o `UPDATE` reescreve a linha inteira). Pra deixar claro que é uma atualização de verdade, imagine que o cliente remarcou pra outro dia e o valor foi reajustado, além de confirmarmos o agendamento:
+
+```json
+{
+  "idcliente": 1,
+  "idtatuador": 1,
+  "dataagendamento": "2026-10-22",
+  "horaagendamento": "16:00",
+  "descricaotatuagem": "Fênix nas costas segurando um arco",
+  "valortatuagem": 480.00,
+  "status": "confirmado"
+}
+```
+
+Repare o que mudou em relação ao cadastro da Parte 4: a data (de 20 pra 22), a hora (de 15:30 pra 16:00), o valor (de 450 pra 480) e o `status`, que agora aparece pela primeira vez.
+
+> Lembre de colocar, na URL (`PUT /agendamentos/{id}`), o `id` de um agendamento que você já cadastrou — esse JSON só atualiza um agendamento existente, não cria um novo.
 
 ---
 
@@ -489,7 +543,7 @@ Adicione o link "Agendamentos" na navbar de `clientes.html`, `senioridade.html` 
 
 - **Erro 422 ao cadastrar:** confira se `idcliente`, `idtatuador` e `valortatuagem` foram convertidos com `Number(...)` antes de montar o JSON — mesma causa do erro que já vimos na Aula 7 com `idsenioridade`.
 - **`<select>` de cliente ou tatuador aparece vazio:** confira se `carregarClientes()` e `carregarTatuadores()` estão sendo chamadas, e se já existe pelo menos um cliente e um tatuador cadastrados.
-- **O campo de hora não preenche certo ao editar:** o `mysql-connector-python` às vezes devolve a coluna `horaagendamento` num formato sem zero à esquerda (por exemplo `9:00:00` em vez de `09:00:00`), e o `<input type="time">` só aceita o formato certo. Se isso acontecer nos seus testes, me avisa que ajustamos juntas — ainda não é algo que apareceu nas aulas anteriores.
+- **`horaagendamento` aparece como um número gigante (tipo `50400`) em vez de uma hora:** o `mysql-connector-python` lê colunas `TIME` como um `timedelta` (tempo decorrido, não um horário), e sem conversão o FastAPI transforma isso no total de segundos. É por isso que as rotas de listar e buscar (Partes 5 e 6) convertem esse valor pra `"HH:MM:SS"` antes de devolver — se você pular essa parte, é isso que vai aparecer na tabela e o `<input type="time">` também não vai preencher certo na edição.
 - **Esqueceu de atualizar a navbar:** se clicar em "Agendamentos" numa página antiga e não tiver o link, é só repetir o bloco da Parte 11 nas páginas que faltaram.
 
 ---
@@ -527,7 +581,7 @@ estudio-tatuagem-api/
 └── REGRAS.md
 ```
 
-Ao terminar esta aula, exporte o banco de novo e atualize [banco/estudio_tatuagem.sql](banco/estudio_tatuagem.sql).
+> **Não esqueça de salvar o banco antes de encerrar.** Durante essa aula você cadastrou e alterou agendamentos de teste — se a máquina for reiniciada sem exportar, esses dados somem e a Aula 9 vai começar sem nenhum agendamento pra testar o upload de imagem. No phpMyAdmin: aba **Exportar** → método **Personalizado** → formato **SQL** → confirme que todas as tabelas estão marcadas → clique em **Exportar** e substitua o arquivo em [banco/estudio_tatuagem.sql](banco/estudio_tatuagem.sql) (mesmo processo da Aula 2, Passo 4).
 
 ---
 
