@@ -45,7 +45,6 @@ async function carregarTatuadores() {
 carregarClientes()
 carregarTatuadores()
 
-// ─── Carrega a lista de agendamentos ao abrir a página ───
 async function listarAgendamentos() {
   const resposta = await fetch(`${API}/agendamentos`)
   const agendamentos = await resposta.json()
@@ -54,6 +53,11 @@ async function listarAgendamentos() {
   corpo.innerHTML = ''
 
   agendamentos.forEach(a => {
+    // se existir um desenho salvo, monta uma miniatura; senão, mostra "-"
+    const imagemHtml = a.desenhoaprovado
+      ? `<img src="${API}/uploads/${a.desenhoaprovado}" style="max-width: 60px; max-height: 60px;">`
+      : '-'
+
     corpo.innerHTML += `
       <tr>
         <td>${a.idagendamento}</td>
@@ -63,6 +67,7 @@ async function listarAgendamentos() {
         <td>${a.horaagendamento}</td>
         <td>${a.valortatuagem ?? '-'}</td>
         <td>${a.status}</td>
+        <td>${imagemHtml}</td>
         <td>
           <button class="btn btn-sm btn-warning me-2" onclick='preencherFormularioEdicao(${JSON.stringify(a)})'>Editar</button>
           <button class="btn btn-sm btn-danger" onclick="deletarAgendamento(${a.idagendamento})">Excluir</button>
@@ -71,7 +76,7 @@ async function listarAgendamentos() {
   })
 }
 
-listarAgendamentos()
+listarAgendamentos()   // essa linha já existia — confira se ela continua aqui depois de colar a função acima
 
 // ─── Cadastrar e atualizar agendamentos ───
 formAgendamento.addEventListener('submit', async (e) => {
@@ -88,10 +93,9 @@ formAgendamento.addEventListener('submit', async (e) => {
       : null,
     status: document.getElementById('status').value
   }
-  // no cadastro, o campo status vai vazio dentro do JSON — sem problema,
-  // porque o INSERT no backend nem usa esse valor (o banco aplica 'pendente' sozinho)
 
   const idAgendamento = formAgendamento.dataset.idAgendamento
+  let idParaUpload = idAgendamento   // qual id vamos usar pra anexar a imagem, se houver uma
 
   if (idAgendamento) {
     await fetch(`${API}/agendamentos/${idAgendamento}`, {
@@ -100,10 +104,26 @@ formAgendamento.addEventListener('submit', async (e) => {
       body: JSON.stringify(agendamento)
     })
   } else {
-    await fetch(`${API}/agendamentos`, {
+    const resposta = await fetch(`${API}/agendamentos`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(agendamento)
+    })
+    const dados = await resposta.json()
+    idParaUpload = dados.idagendamento   // pega o id que acabou de ser criado
+  }
+
+  // ─── Se um arquivo foi escolhido, envia numa segunda chamada, separada ───
+  const arquivo = document.getElementById('desenho').files[0]
+  if (arquivo) {
+    const formData = new FormData()   // FormData, não JSON — porque tem um arquivo dentro
+    formData.append('arquivo', arquivo)   // "arquivo" precisa ser o mesmo nome do parâmetro no FastAPI
+
+    await fetch(`${API}/agendamentos/${idParaUpload}/desenho`, {
+      method: 'POST',
+      body: formData
+      // repare que aqui NÃO colocamos o header Content-Type — o navegador
+      // define esse cabeçalho sozinho quando o corpo é um FormData
     })
   }
 

@@ -5,10 +5,11 @@
 #            tatuador (duas chaves estrangeiras).
 # ============================================================
 
-from fastapi import APIRouter
+from fastapi import APIRouter, UploadFile, File # nova
 from pydantic import BaseModel
 from typing import Optional
 from database import conectar
+import os # nova aula 9
 
 router = APIRouter()
 
@@ -21,23 +22,6 @@ class Agendamento(BaseModel):
     descricaotatuagem: Optional[str] = None # opcional
     valortatuagem: Optional[float] = None   # opcional
     status: Optional[str] = None            # só é usado ao atualizar (ver Parte 4)
-
-# POST /agendamentos — cadastra um novo agendamento
-@router.post("/agendamentos")
-def criar_agendamento(agendamento: Agendamento):
-    conn = conectar()
-    cursor = conn.cursor()
-    cursor.execute(
-        """INSERT INTO agendamento (idcliente, idtatuador, dataagendamento, horaagendamento, descricaotatuagem, valortatuagem)
-           VALUES (%s, %s, %s, %s, %s, %s)""",
-        (agendamento.idcliente, agendamento.idtatuador, agendamento.dataagendamento,
-         agendamento.horaagendamento, agendamento.descricaotatuagem, agendamento.valortatuagem)
-    )
-    # repare que a coluna status nem aparece aqui — o banco aplica sozinho
-    # o DEFAULT 'pendente' que já foi definido lá na Aula 2
-    conn.commit()
-    conn.close()
-    return {"mensagem": "Agendamento cadastrado com sucesso"}
 
 # GET /agendamentos — lista todos os agendamentos, já com nome do cliente e do tatuador
 @router.get("/agendamentos")
@@ -53,8 +37,7 @@ def listar_agendamentos():
     agendamentos = cursor.fetchall()
     conn.close()
 
-    # o mysql-connector-python devolve colunas TIME como um "timedelta" (tempo decorrido),
-    # não como texto — por isso convertemos aqui pra "HH:MM:SS" antes de mandar pro frontend
+    # mesma conversão da rota de buscar por ID — sem isso, horaagendamento viria como número de segundos
     for a in agendamentos:
         total_segundos = int(a["horaagendamento"].total_seconds())
         horas, resto = divmod(total_segundos, 3600)
@@ -62,6 +45,21 @@ def listar_agendamentos():
         a["horaagendamento"] = f"{horas:02d}:{minutos:02d}:{segundos:02d}"
 
     return agendamentos
+# POST /agendamentos — cadastra um novo agendamento
+@router.post("/agendamentos")
+def criar_agendamento(agendamento: Agendamento):
+    conn = conectar()
+    cursor = conn.cursor()
+    cursor.execute(
+        """INSERT INTO agendamento (idcliente, idtatuador, dataagendamento, horaagendamento, descricaotatuagem, valortatuagem)
+           VALUES (%s, %s, %s, %s, %s, %s)""",
+        (agendamento.idcliente, agendamento.idtatuador, agendamento.dataagendamento,
+         agendamento.horaagendamento, agendamento.descricaotatuagem, agendamento.valortatuagem)
+    )
+    novo_id = cursor.lastrowid   # o ID que o MySQL gerou sozinho pro novo agendamento (AUTO_INCREMENT)
+    conn.commit()
+    conn.close()
+    return {"mensagem": "Agendamento cadastrado com sucesso", "idagendamento": novo_id}
 
 # GET /agendamentos/{id} — busca um agendamento pelo ID
 @router.get("/agendamentos/{id}")
@@ -109,3 +107,19 @@ def deletar_agendamento(id: int):
     conn.commit()
     conn.close()
     return {"mensagem": "Agendamento deletado com sucesso"}
+
+@router.post("/agendamentos/{id}/desenho")
+async def upload_desenho(id: int, arquivo: UploadFile = File(...)):
+    nome_arquivo = f"{id}_{arquivo.filename}"   # o id na frente evita nomes repetidos entre agendamentos
+    caminho = os.path.join("uploads", nome_arquivo)
+
+    conteudo = await arquivo.read()       # lê o conteúdo do arquivo enviado
+    with open(caminho, "wb") as f:        # "wb" = write binary — é uma imagem, não texto
+        f.write(conteudo)
+
+    conn = conectar()
+    cursor = conn.cursor()
+    cursor.execute("UPDATE agendamento SET desenhoaprovado=%s WHERE idagendamento=%s", (nome_arquivo, id))
+    conn.commit()
+    conn.close()
+    return {"mensagem": "Desenho enviado com sucesso", "arquivo": nome_arquivo}

@@ -37,6 +37,13 @@ Nessa ordem:
 - Tabela comparando "o que já vimos" com "o que é novo nessa aula", quando o conceito permitir
 - Analogia do mundo real pra introduzir um conceito abstrato (API = garçom de restaurante; chave estrangeira = campo "Estado" de um cadastro)
 
+### Ao pedir pra editar uma função que já existe (não criar uma nova)
+
+Quando uma instrução for do tipo "ajuste só a função X que já existe", **nunca mostrar apenas o bloco de código novo sem avisar explicitamente que ele substitui o antigo**. Isso já causou um bug real: o aluno colou a função nova do lado da antiga em vez de apagar e substituir, resultando numa rota duplicada e empurrando/apagando sem querer uma rota vizinha (aconteceu na Aula 9, com `criar_agendamento` empurrando o `GET /agendamentos` pra fora do arquivo).
+
+Sempre que isso acontecer, incluir um aviso tipo:
+> **Atenção pra não duplicar:** apague a função inteira antiga antes de colar a nova no lugar. Se preferir mais seguro, edite só as linhas que realmente mudaram, direto na função existente, em vez de apagar tudo.
+
 ### Exemplo de JSON para testar
 
 Sempre que o corpo de um `POST`/`PUT` tiver um campo de **chave estrangeira**, incluir uma subseção `### Exemplo de JSON para testar` com:
